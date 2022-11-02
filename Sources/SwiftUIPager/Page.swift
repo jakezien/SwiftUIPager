@@ -44,7 +44,7 @@ public class Page: ObservableObject {
     #if !os(tvOS)
     
     /// `swipeGesture` translation on the X-Axis
-    var draggingOffset: CGFloat = 0
+    public var draggingOffset: CGFloat = 0
 
     /// `swipeGesture` last translation on the X-Axis
     var lastDraggingValue: DragGesture.Value?
