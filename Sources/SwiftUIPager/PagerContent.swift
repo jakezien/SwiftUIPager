@@ -7,13 +7,14 @@
 //
 
 import SwiftUI
+import Combine
 
 ///
 /// `PagerContent` is the content of `Pager`. This view is needed so that `Pager` wrapps it around a `GeometryReader ` and passes the size in its initializer.
 ///
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 extension Pager {
-    struct PagerContent: View {
+    public struct PagerContent: View {
 
         /// `Direction` determines the direction of the swipe gesture
         enum Direction {
@@ -37,7 +38,7 @@ extension Pager {
         let size: CGSize
 
         /// `ViewBuilder` block to create each page
-        let content: (Element) -> PageView
+        let content: (Element, PagerContent) -> PageView
 
         /// `KeyPath` to data id property
         let id: KeyPath<PageWrapper<Element, ID>, String>
@@ -163,6 +164,11 @@ extension Pager {
 
         #endif
 
+        @State var subs = Set<AnyCancellable>() // Cancel onDisappear
+        @State var scrollOffset: CGSize = .zero
+        
+
+
         /// Initializes a new `Pager`.
         ///
         /// - Parameter size: Available size
@@ -170,22 +176,41 @@ extension Pager {
         /// - Parameter data: Array of items to populate the content
         /// - Parameter id: KeyPath to identifiable property
         /// - Parameter content: Factory method to build new pages
-        init(size: CGSize, pagerModel: Page, data: [Element], id: KeyPath<Element, ID>, @ViewBuilder content: @escaping (Element) -> PageView) {
+        init(size: CGSize, pagerModel: Page, data: [Element], id: KeyPath<Element, ID>, @ViewBuilder content: @escaping (Element, PagerContent) -> PageView) {
             self.size = size
             self.pagerModel = pagerModel
             self.data = data.map { PageWrapper(batchId: 1, keyPath: id, element: $0) }
             self.id = \PageWrapper<Element, ID>.id
             self.content = content
         }
+        
+        func trackScrollWheel() {
+            #if os(macOS)
+            NSApp.publisher(for: \.currentEvent)
+                .filter { event in event?.type == .scrollWheel }
+//                .throttle(for: .milliseconds(200),
+//                          scheduler: DispatchQueue.main,
+//                          latest: true)
+                .sink { event in
+                    print(event!.phase, event!.momentumPhase)
+                    if event?.phase.rawValue == 0 || event?.momentumPhase == .ended {
+                        self.onScrollEnded(with: event!)
+                    } else {
+                        self.onScrollChanged(with: event!)
+                    }
+                }
+                .store(in: &subs)
+            #endif
+        }
 
-        var body: some View {
+        public var body: some View {
             let stack = HStack(spacing: interactiveItemSpacing) {
                 ForEach(dataDisplayed, id: id) { item in
                     Group {
                         if self.isInifinitePager && self.isEdgePage(item) {
                             EmptyView()
                         } else {
-                            self.content(item.element)
+                            self.content(item.element, self)
                                 .frame(size: self.pageSize)
                                 .scaleEffect(self.scale(for: item))
                                 .rotation3DEffect((self.isHorizontal ? .zero : Angle(degrees: -90)) - self.scrollDirectionAngle,
@@ -199,6 +224,7 @@ extension Pager {
                 .offset(x: self.xOffset, y : self.yOffset)
             }
             .frame(size: size)
+            .onAppear { trackScrollWheel() }
 
             #if !os(tvOS)
             var wrappedView: AnyView = swipeInteractionArea == .page ? AnyView(stack) : AnyView(stack.contentShape(Rectangle()))
@@ -483,4 +509,85 @@ extension Pager.PagerContent {
     }
     #endif
 
+    func onScrollChanged(with event: NSEvent) {
+        
+        let animation = draggingAnimation.animation
+        withAnimation(animation) {
+            if self.pagerModel.lastScrollingEvent == nil {
+//                onScrollingBegan?()
+            }
+            
+            self.scrollOffset = CGSize(width: self.scrollOffset.width + event.deltaX, height: self.scrollOffset.height + event.deltaY)
+            print(self.scrollOffset)
+            
+//            let currentLocation = scrollLocation(for: event)
+//            let currentTranslation = scrollTranslation(for: event)
+//            let lastLocation = self.pagerModel.lastScrollingEvent.flatMap(scrollLocation) ?? currentLocation
+//
+            let side = self.isHorizontal ? self.size.width : self.size.height
+            let normalizedRatio = self.allowsMultiplePagination ? 1 : (self.pageDistance / side)
+            let offsetIncrement = (self.scrollOffset.width - event.deltaX) * normalizedRatio
+//
+//            // If swipe hasn't started yet, ignore swipes if they didn't start on the X-Axis
+////            let isTranslationInXAxis = abs(currentTranslation.width) > abs(currentTranslation.height)
+////            guard self.draggingOffset != 0 || isTranslationInXAxis else {
+////                return
+////            }
+//
+            let timeIncrement = event.timestamp - (lastScrollingEvent?.timestamp ?? event.timestamp)
+            if timeIncrement != 0 {
+                self.pagerModel.draggingVelocity = Double(offsetIncrement) / timeIncrement
+            }
+//
+//            var newOffset = self.scrollingOffset + offsetIncrement * (Locale.current.isRightToLeft ? -1 : 1)
+//            if !allowsMultiplePagination {
+//                newOffset = self.direction == .forward ? max(newOffset, self.pageRatio * -self.pageDistance) : min(newOffset, self.pageRatio * self.pageDistance)
+//            }
+
+            self.pagerModel.draggingOffset = self.scrollOffset.width
+            self.pagerModel.lastScrollingEvent = event
+//            self.onDraggingChanged?(Double(-self.draggingOffset / self.pageDistance))
+            self.pagerModel.objectWillChange.send()
+        }
+    }
+    
+    func onScrollEnded(with event: NSEvent) {
+        self.scrollOffset = .zero
+        self.onDragGestureEnded()
+    }
+    
+    
+    private func scrollTranslation(for event: NSEvent) -> CGSize {
+        let multiplier: CGFloat = scrollDirectionAngle == .zero ? 1 : -1
+        var result: CGSize
+        if isHorizontal {
+            result = CGSize(
+                width: (event.deltaX * multiplier) + self.scrollOffset.width,
+                height: (event.deltaY * multiplier) + self.scrollOffset.height
+            )
+        } else {
+            result = CGSize(
+                width: (event.deltaY * multiplier) + self.scrollOffset.height,
+                height:(event.deltaX * multiplier) + self.scrollOffset.width
+            )
+        }
+        return result
+    }
+    
+    private func scrollLocation(for event: NSEvent) -> CGPoint {
+        let multiplier: CGFloat = scrollDirectionAngle == .zero ? 1 : -1
+        if isHorizontal {
+            return CGPoint(
+                x: event.locationInWindow.x * multiplier,
+                y: event.locationInWindow.y * multiplier
+            )
+        } else {
+            return CGPoint(
+                x: event.locationInWindow.y * multiplier,
+                y: event.locationInWindow.x * multiplier
+            )
+        }
+    }
+    
+    
 }

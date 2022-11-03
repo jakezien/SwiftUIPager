@@ -28,6 +28,23 @@ extension Pager.PagerContent {
         pagerModel.draggingVelocity
     }
     
+    /// `scrollGesture` translation on the X-Axis
+    var scrollingOffset: CGFloat {
+        pagerModel.scrollingOffset
+    }
+
+    /// `scrollGesture` last translation on the X-Axis
+    var lastScrollingEvent: NSEvent? {
+        pagerModel.lastScrollingEvent
+    }
+
+    /// `scrollGesture` velocity on the X-Axis
+    var scrollingVelocity: Double {
+        pagerModel.scrollingVelocity
+    }
+    
+    
+        
     #endif
 
     /// Increment resulting from the last swipe

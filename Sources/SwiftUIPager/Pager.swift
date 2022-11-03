@@ -8,6 +8,10 @@
 
 import SwiftUI
 
+public struct PagerProxy {
+    let pager: Pager<[NSObject], AnyHashable, AnyView>.PagerContent
+}
+
 ///
 /// `Pager` is a view built on top of native SwiftUI components. Given a `ViewBuilder` and some `Identifiable` and `Equatable` data,
 /// this view will create a scrollable container to display a handful of pages. The pages are recycled on scroll. `Pager` is easily customizable through a number
@@ -53,7 +57,7 @@ public struct Pager<Element, ID, PageView>: View  where PageView: View, Element:
     /*** Dependencies ***/
 
     /// `ViewBuilder` block to create each page
-    let content: (Element) -> PageView
+    let content: (Element, PagerContent) -> PageView
 
     /// `KeyPath` to data id property
     let id: KeyPath<Element, ID>
@@ -172,13 +176,14 @@ public struct Pager<Element, ID, PageView>: View  where PageView: View, Element:
 
     let pagerModel: Page
     
+    
     /// Initializes a new `Pager`.
     ///
     /// - Parameter page: Current page index
     /// - Parameter data: Collection of items to populate the content
     /// - Parameter id: KeyPath to identifiable property
     /// - Parameter content: Factory method to build new pages
-    public init<Data: RandomAccessCollection>(page: Page, data: Data, id: KeyPath<Element, ID>, @ViewBuilder content: @escaping (Element) -> PageView) where Data.Index == Int, Data.Element == Element {
+    public init<Data: RandomAccessCollection>(page: Page, data: Data, id: KeyPath<Element, ID>, @ViewBuilder content: @escaping (Element, PagerContent) -> PageView) where Data.Index == Int, Data.Element == Element {
         self.pagerModel = page
         self.data = Array(data)
         self.id = id
@@ -247,6 +252,7 @@ public struct Pager<Element, ID, PageView>: View  where PageView: View, Element:
         if let preferredItemSize = preferredItemSize {
             pagerContent = pagerContent.preferredItemSize(preferredItemSize)
         }
+        
 
         return pagerContent
     }
@@ -261,7 +267,7 @@ extension Pager where ID == Element.ID, Element : Identifiable {
     /// - Parameter page: Current page index
     /// - Parameter data: Collection of items to populate the content
     /// - Parameter content: Factory method to build new pages
-    public init<Data: RandomAccessCollection>(page: Page, data: Data, @ViewBuilder content: @escaping (Element) -> PageView) where Data.Index == Int, Data.Element == Element {
+    public init<Data: RandomAccessCollection>(page: Page, data: Data, @ViewBuilder content: @escaping (Element, PagerContent) -> PageView) where Data.Index == Int, Data.Element == Element {
         self.init(page: page, data: Array(data), id: \Element.id, content: content)
     }
 
