@@ -54,15 +54,16 @@ public class Page: ObservableObject {
     
     /// `scrollGesture` translation on the X-Axis
     public var scrollingOffset: CGFloat = 0
+    #endif
 
+    #if os(macOS)
     /// `scrollGesture` last translation on the X-Axis
     var lastScrollingEvent: NSEvent?
     
     /// `scrollGesture` velocity on the X-Axis
     var scrollingVelocity: Double = 0
-    
-    
     #endif
+    
 
     /// Increment resulting from the last swipe
     var pageIncrement = 0

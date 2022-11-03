@@ -166,7 +166,7 @@ extension Pager {
 
         @State var subs = Set<AnyCancellable>() // Cancel onDisappear
         @State var scrollOffset: CGSize = .zero
-        @State var stackMode = true
+        @State var stackMode = false
         
 
 
@@ -533,6 +533,7 @@ extension Pager.PagerContent {
     }
     #endif
 
+    #if os(macOS)
     func onScrollChanged(with event: NSEvent) {
         
         let animation = draggingAnimation.animation
@@ -612,6 +613,6 @@ extension Pager.PagerContent {
             )
         }
     }
-    
+    #endif
     
 }

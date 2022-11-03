@@ -32,19 +32,21 @@ extension Pager.PagerContent {
     var scrollingOffset: CGFloat {
         pagerModel.scrollingOffset
     }
+    
+    
+#endif
+        
 
+    #if os(macOS)
     /// `scrollGesture` last translation on the X-Axis
     var lastScrollingEvent: NSEvent? {
         pagerModel.lastScrollingEvent
     }
-
+    
     /// `scrollGesture` velocity on the X-Axis
     var scrollingVelocity: Double {
         pagerModel.scrollingVelocity
     }
-    
-    
-        
     #endif
 
     /// Increment resulting from the last swipe
