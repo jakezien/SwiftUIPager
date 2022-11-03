@@ -166,6 +166,7 @@ extension Pager {
 
         @State var subs = Set<AnyCancellable>() // Cancel onDisappear
         @State var scrollOffset: CGSize = .zero
+        @State var stackMode = true
         
 
 
@@ -204,27 +205,50 @@ extension Pager {
         }
 
         public var body: some View {
-            let stack = HStack(spacing: interactiveItemSpacing) {
-                ForEach(dataDisplayed, id: id) { item in
-                    Group {
-                        if self.isInifinitePager && self.isEdgePage(item) {
-                            EmptyView()
-                        } else {
-                            self.content(item.element, self)
-                                .frame(size: self.pageSize)
-                                .scaleEffect(self.scale(for: item))
-                                .rotation3DEffect((self.isHorizontal ? .zero : Angle(degrees: -90)) - self.scrollDirectionAngle,
-                                                  axis: (0, 0, 1))
-                                .rotation3DEffect(self.angle(for: item),
-                                                  axis:  self.axis)
-                                .opacity(opacity(for: item))
+            
+            var stack: any View
+            if self.stackMode {
+                stack = ZStack() {
+                    ForEach(dataDisplayed.reversed(), id: id) { item in
+                        Group {
+                            if self.isInifinitePager && self.isEdgePage(item) {
+                                EmptyView()
+                            } else {
+                                self.content(item.element, self)
+                                    .frame(size: self.pageSize)
+                                    .scaleEffect(self.scale(for: item))
+                                    .rotationEffect(stackRotation(for: item))
+                                    .opacity(stackOpacity(for: item))
+                                    .offset(stackOffset(for: item))
+                            }
                         }
                     }
                 }
-                .offset(x: self.xOffset, y : self.yOffset)
+                    .frame(size: size)
+                    .onAppear { trackScrollWheel() }
+            } else {
+                stack = HStack(spacing: interactiveItemSpacing) {
+                    ForEach(dataDisplayed, id: id) { item in
+                        Group {
+                            if self.isInifinitePager && self.isEdgePage(item) {
+                                EmptyView()
+                            } else {
+                                self.content(item.element, self)
+                                    .frame(size: self.pageSize)
+                                    .scaleEffect(self.scale(for: item))
+                                    .rotation3DEffect((self.isHorizontal ? .zero : Angle(degrees: -90)) - self.scrollDirectionAngle,
+                                                      axis: (0, 0, 1))
+                                    .rotation3DEffect(self.angle(for: item),
+                                                      axis:  self.axis)
+                                    .opacity(opacity(for: item))
+                            }
+                        }
+                    }
+                    .offset(x: self.xOffset, y : self.yOffset)
+                }
+                    .frame(size: size)
+                    .onAppear { trackScrollWheel() }
             }
-            .frame(size: size)
-            .onAppear { trackScrollWheel() }
 
             #if !os(tvOS)
             var wrappedView: AnyView = swipeInteractionArea == .page ? AnyView(stack) : AnyView(stack.contentShape(Rectangle()))

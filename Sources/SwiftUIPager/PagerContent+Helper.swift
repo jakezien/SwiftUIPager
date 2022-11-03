@@ -274,6 +274,71 @@ extension Pager.PagerContent {
         return max(offsetUpperbound, min(offsetLowerbound, offset))
     }
 
+    /// XY offset for dragged item in ZStack when in stack mode
+    func stackOffset(for item: PageWrapper<Element, ID>) -> CGSize {
+//        guard let opacityIncrement = opacityIncrement else { return 1 }
+        guard let index: Int = dataDisplayed.firstIndex(of: item) else { return .zero }
+        guard let displayedItem = dataDisplayed.first(where: { $0 == data[page] }) else { return .zero }
+        guard let displayedIndex: Int = dataDisplayed.firstIndex(of: displayedItem) else { return .zero }
+        let xIncrement = pageDistance / 2
+        let dragRatio = draggingOffset / xIncrement
+        
+        if index == displayedIndex - 1 {
+            if draggingOffset > 0 {
+                return CGSize(width: (1-dragRatio) * -1 * pageDistance, height: (1-dragRatio) * -1 * pageDistance/2)
+            } else {
+                return CGSize(width: -1 * pageDistance, height: -1 * pageDistance/2)
+            }
+        }
+        
+        if index == displayedIndex && draggingOffset < 0 {
+//            return CGSize(width: self.draggingOffset, height: -1 * abs(self.draggingOffset/2))
+            return CGSize(width: dragRatio * pageDistance, height: dragRatio * pageDistance/2)
+        } else {
+            return .zero
+        }
+    }
+
+    /// Opacity for items in ZStack when in stack mode
+    func stackOpacity(for item: PageWrapper<Element, ID>) -> CGFloat {
+//        guard let opacityIncrement = opacityIncrement else { return 1 }
+        guard let index: Int = dataDisplayed.firstIndex(of: item) else { return .zero }
+        guard let displayedItem = dataDisplayed.first(where: { $0 == data[page] }) else { return .zero }
+        guard let displayedIndex: Int = dataDisplayed.firstIndex(of: displayedItem) else { return .zero }
+
+        if abs(index - displayedIndex) <= 1 {
+            return 1
+        } else {
+            return 0
+        }
+    }
+    
+    /// Rotation for dragged item in ZStack when in stack mode
+    func stackRotation(for item: PageWrapper<Element, ID>) -> Angle {
+//        guard let opacityIncrement = opacityIncrement else { return 1 }
+        guard let index: Int = dataDisplayed.firstIndex(of: item) else { return .zero }
+        guard let displayedItem = dataDisplayed.first(where: { $0 == data[page] }) else { return .zero }
+        guard let displayedIndex: Int = dataDisplayed.firstIndex(of: displayedItem) else { return .zero }
+        let xIncrement = pageDistance / 2
+        let dragRatio = draggingOffset / xIncrement
+        let maxRotationDegrees = 30.0
+        
+        if index == displayedIndex - 1 {
+            if draggingOffset > 0 {
+                return Angle(degrees: (1-dragRatio) * -1 * maxRotationDegrees)
+            } else {
+                return Angle(degrees: -1 * maxRotationDegrees)
+            }
+        }
+        
+        if index == displayedIndex && draggingOffset < 0 {
+            return Angle(degrees: dragRatio * maxRotationDegrees)
+        } else {
+            return .zero
+        }
+    }
+    
+    
     /// Angle for the 3D rotation effect
     func angle(for item: PageWrapper<Element, ID>) -> Angle {
         guard shouldRotate else { return .zero }
