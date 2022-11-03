@@ -244,7 +244,7 @@ extension Pager {
                             }
                         }
                     }
-                    .offset(x: self.xOffset, y : self.yOffset)
+                    .offset(x: self.xOffset, y: self.yOffset)
                 }
                     .frame(size: size)
                     .onAppear { trackScrollWheel() }
