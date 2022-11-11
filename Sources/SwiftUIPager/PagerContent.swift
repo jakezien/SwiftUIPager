@@ -193,7 +193,7 @@ extension Pager {
 //                          scheduler: DispatchQueue.main,
 //                          latest: true)
                 .sink { event in
-                    print(event!.phase, event!.momentumPhase)
+//                    print(event!.phase, event!.momentumPhase)
                     if event?.phase.rawValue == 0 || event?.momentumPhase == .ended {
                         self.onScrollEnded(with: event!)
                     } else {
@@ -543,7 +543,7 @@ extension Pager.PagerContent {
             }
             
             self.scrollOffset = CGSize(width: self.scrollOffset.width + event.deltaX, height: self.scrollOffset.height + event.deltaY)
-            print(self.scrollOffset)
+//            print(self.scrollOffset)
             
 //            let currentLocation = scrollLocation(for: event)
 //            let currentTranslation = scrollTranslation(for: event)
