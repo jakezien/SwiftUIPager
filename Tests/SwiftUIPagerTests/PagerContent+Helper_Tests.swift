@@ -6,7 +6,7 @@ final class PagerContent_Helper_Tests: XCTestCase {
 
     var givenPager: Pager<Int, Int, Text>.PagerContent {
         Pager.PagerContent(size: CGSize(width: 300, height: 300), pagerModel: .first(), data: Array(0..<20), id: \.self) {
-            Text("\($0)")
+            Text("\($0)" + "\($1)")
         }
     }
 

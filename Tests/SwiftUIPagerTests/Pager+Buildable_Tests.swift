@@ -10,7 +10,7 @@ final class Pager_Buildable_Tests: XCTestCase {
 
     var givenPager: Pager<Int, Int, Text> {
         Pager(page: .first(), data: Array(0..<20)) {
-            Text("\($0)")
+            Text("\($0)" + "\($1)")
         }
     }
 
