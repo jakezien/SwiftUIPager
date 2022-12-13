@@ -193,7 +193,8 @@ extension Pager {
 //                          scheduler: DispatchQueue.main,
 //                          latest: true)
                 .sink { event in
-                    print(event!.phase, event!.momentumPhase)
+                    print(event!.phase, event!.momentumPhase, event!.locationInWindow)
+                    
                     if event?.phase.rawValue == 0 || event?.momentumPhase == .ended {
                         self.onScrollEnded(with: event!)
                     } else {
