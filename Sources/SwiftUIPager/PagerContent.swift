@@ -185,25 +185,25 @@ extension Pager {
             self.content = content
         }
         
-        func trackScrollWheel() {
-            #if os(macOS)
-            NSApp.publisher(for: \.currentEvent)
-                .filter { event in event?.type == .scrollWheel }
-//                .throttle(for: .milliseconds(200),
-//                          scheduler: DispatchQueue.main,
-//                          latest: true)
-                .sink { event in
-                    print(event!.phase, event!.momentumPhase, event!.locationInWindow)
-                    
-                    if event?.phase.rawValue == 0 || event?.momentumPhase == .ended {
-                        self.onScrollEnded(with: event!)
-                    } else {
-                        self.onScrollChanged(with: event!)
-                    }
-                }
-                .store(in: &subs)
-            #endif
-        }
+//        func trackScrollWheel() {
+//            #if os(macOS)
+//            NSApp.publisher(for: \.currentEvent)
+//                .filter { event in event?.type == .scrollWheel }
+////                .throttle(for: .milliseconds(200),
+////                          scheduler: DispatchQueue.main,
+////                          latest: true)
+//                .sink { event in
+//                    print(event!.phase, event!.momentumPhase, event!.locationInWindow)
+//
+//                    if event?.phase.rawValue == 0 || event?.momentumPhase == .ended {
+//                        self.onScrollEnded(with: event!)
+//                    } else {
+//                        self.onScrollChanged(with: event!)
+//                    }
+//                }
+//                .store(in: &subs)
+//            #endif
+//        }
 
         public var body: some View {
             
@@ -226,7 +226,7 @@ extension Pager {
                     }
                 }
                     .frame(size: size)
-                    .onAppear { trackScrollWheel() }
+                    
             } else {
                 stack = HStack(spacing: interactiveItemSpacing) {
                     ForEach(dataDisplayed, id: id) { item in
@@ -248,7 +248,6 @@ extension Pager {
                     .offset(x: self.xOffset, y: self.yOffset)
                 }
                     .frame(size: size)
-                    .onAppear { trackScrollWheel() }
             }
 
             #if !os(tvOS)
@@ -271,9 +270,20 @@ extension Pager {
                 .rotation3DEffect(
                     (isHorizontal ? .zero : Angle(degrees: 90)) + scrollDirectionAngle,
                     axis: (0, 0, 1)
-                ).eraseToAny()
+                )
+                .eraseToAny()
+            
+            if #available(macOS 12.0, *) {
+                resultView = resultView.overlay {
+                    RepresentableScrollView()
+                    .onScroll{ event in
+                        print("\(type(of: self)) :: \(#function) :: \(event)")
+                        self.onScrollChanged(with: event)
+                    }
+                }.eraseToAny()
+            }
 
-            if #available(iOS 13.2, macOS 10.15, tvOS 13.0, watchOS 6.0, *) {
+            if #available(iOS 13.2, tvOS 13.0, watchOS 6.0, *) {
                 resultView = resultView
                     .onAnimationCompleted(for: CGFloat(pagerModel.index), completion: {
                         // #194 AnimatableModifier symbol not found in iOS 13.0 and iOS 13.1
