@@ -273,6 +273,7 @@ extension Pager {
                 )
                 .eraseToAny()
             
+            #if os(macOS)
             if #available(macOS 12.0, *) {
                 resultView = resultView.overlay {
                     RepresentableScrollView()
@@ -282,6 +283,7 @@ extension Pager {
                     }
                 }.eraseToAny()
             }
+            #endif
 
             if #available(iOS 13.2, tvOS 13.0, watchOS 6.0, *) {
                 resultView = resultView
