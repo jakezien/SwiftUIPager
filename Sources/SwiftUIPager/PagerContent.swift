@@ -470,7 +470,8 @@ extension Pager.PagerContent {
         }
 
         // #194 AnimatableModifier symbol not found in iOS 13.0 and iOS 13.1
-        if #available(iOS 13.2, macOS 10.15, tvOS 13.0, watchOS 6.0, *) {
+//        if #available(iOS 13.2, macOS 10.15, tvOS 13.0, watchOS 6.0, *) {
+        if #available(iOS 13.2, tvOS 13.0, watchOS 6.0, *) {
             // Do nothing
         } else if page != newPage {
             self.pagerModel.pageIncrement = 0
